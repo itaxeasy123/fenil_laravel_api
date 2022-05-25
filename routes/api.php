@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\ServiceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('login/{provider}', [AuthController::class,'redirectToProvider']);
 Route::get('login/{provider}/callback', [AuthController::class,'handleProviderCallback']);
+
+Route::post('extract',[ServiceController::class,'extract']);
+
 Route::middleware('auth:api')->group(function () {
     // Route::resource('posts', PostController::class);
 });
