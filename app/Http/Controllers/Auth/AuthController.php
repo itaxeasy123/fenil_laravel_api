@@ -54,8 +54,8 @@ class AuthController extends Controller
             ]
         );
         $token = $userCreated->createToken('auth-socialite')->accessToken;
-        $success['token'] = $token; 
-        $success['user'] = $userCreated; 
+        $success['token'] = $token;
+        $success['user'] = $userCreated;
 
         return response()->json($success, 200);
     }

@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-Route::get('/login/{provider}', [AuthController::class,'redirectToProvider']);
+Route::get('login/{provider}', [AuthController::class,'redirectToProvider']);
 Route::get('login/{provider}/callback', [AuthController::class,'handleProviderCallback']);
 Route::middleware('auth:api')->group(function () {
     // Route::resource('posts', PostController::class);
