@@ -82,7 +82,7 @@ class ServiceController extends Controller
 
     public function merge(Request $request)
     {
-        File::deleteDirectory(public_path('PDF'));
+        // File::deleteDirectory(public_path('PDF'));
 
         $validator = Validator::make($request->all(), [
             'pdfs' => 'required',
