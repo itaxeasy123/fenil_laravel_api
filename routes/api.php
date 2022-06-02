@@ -26,6 +26,7 @@ Route::get('login/{provider}/callback', [AuthController::class,'handleProviderCa
 Route::post('extract',[ServiceController::class,'extract']);
 Route::post('merge',[ServiceController::class,'merge']);
 Route::post('imagetopdf',[ServiceController::class,'imageToPdf']);
+Route::post('compress',[ServiceController::class,'compress']);
 
 Route::middleware('auth:api')->group(function () {
     // Route::resource('posts', PostController::class);

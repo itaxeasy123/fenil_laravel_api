@@ -7,7 +7,9 @@ use Smalot\PdfParser\Parser;
 use Illuminate\Support\Facades\Validator;
 use Webklex\PDFMerger\Facades\PDFMergerFacade as PDFMerger;
 use Barryvdh\DomPDF\Facade\Pdf;
-
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class ServiceController extends Controller
 {
@@ -19,7 +21,7 @@ class ServiceController extends Controller
 
         // $data = $pdf->getText();
 
-        // $data = $pdf->getPages()[2]->getDataTm();
+        // $data = $pdf->getPages()[3]->getDataTm();
         // return $data;
 
         // $data[] = $pdf->getPages()[0]->getDataTm()[16][1];
@@ -34,6 +36,7 @@ class ServiceController extends Controller
         $data['Total amount of deductions under section 16 [4(a)+4(b)+4(c)]'] = $pdf->getPages()[3]->getDataTm()[35][1];
         $data['Income chargeable under the head "Salaries" [(3+1(e)-5]'] = $pdf->getPages()[3]->getDataTm()[36][1];
         $data['Gross total income (6+8)'] = $pdf->getPages()[3]->getDataTm()[49][1];
+        $data['Total deduction under section 80C, 80CCC and 80CCD(1)'] = ($pdf->getPages()[3]->getDataTm()[73][1] < 150000) ? $pdf->getPages()[3]->getDataTm()[73][1] : 150000;
         $data['Aggregate of deductible amount under Chapter VI-A
         [10(d)+10(e)+10(f)+10(g)+10(h)+10(i)+10(j)+10(l)]'] = $pdf->getPages()[4]->getDataTm()[39][1];
         $data['Total taxable income (9-11)'] = $pdf->getPages()[4]->getDataTm()[44][1];
@@ -79,6 +82,8 @@ class ServiceController extends Controller
 
     public function merge(Request $request)
     {
+        File::deleteDirectory(public_path('PDF'));
+
         $validator = Validator::make($request->all(), [
             'pdfs' => 'required',
             'pdfs.*' => 'required|mimes:pdf',
@@ -96,13 +101,21 @@ class ServiceController extends Controller
 
         $fileName = time() . '.pdf';
         $pdf->merge();
-        $pdf->save(public_path('PDF/' . $fileName));
 
-        return response()->download(public_path( 'PDF/' .$fileName));
+        $path = public_path('PDF/');
+
+        if (!File::isDirectory($path)) {
+            File::makeDirectory($path, 7777, true, true);
+        }
+
+        $pdf->save($path . $fileName);
+
+        return response()->download(public_path('PDF/' . $fileName));
     }
 
     public function imageToPdf(Request $request)
     {
+        File::deleteDirectory(public_path('images'));
         $validator = Validator::make($request->all(), [
             'images' => 'required',
             'images.*' => 'required|image',
@@ -112,7 +125,6 @@ class ServiceController extends Controller
             return response($validator->errors(), 401);
         }
 
-        // $images = $request->file('images');
         foreach ($request->file('images') as $image) {
             $imageName = time() . '.' . $image->extension();
             $image->move(public_path('images'), $imageName);
@@ -121,10 +133,12 @@ class ServiceController extends Controller
 
         $data = ['images' => $images];
         $pdf = PDF::loadView('Pdf.images', $data);
-        // $fileName = time() . '.pdf';
-        // $pdf->save($fileName);
-        // dd($fileName);
-        // return view('Pdf.images',$data);
+
         return $pdf->download("imagetopdf.pdf");
+    }
+
+    public function compress()
+    {
+        return "work in progress !";
     }
 }
