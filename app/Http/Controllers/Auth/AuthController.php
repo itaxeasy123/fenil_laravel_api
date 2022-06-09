@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Facades\Socialite;
 
 use function GuzzleHttp\Promise\all;
@@ -39,7 +41,8 @@ class AuthController extends Controller
                 'email' => $user->getEmail()
             ],
             [
-                'name' => $user->getName() ?? "Test",
+                'first_name' => $user->getName() ?? "Test",
+                'last_name' => $user->getName() ?? "Test",
                 'password' => '1234',
                 'email_verified_at' => now(),
             ]
@@ -62,8 +65,66 @@ class AuthController extends Controller
 
     protected function validateProvider($provider)
     {
-        if (!in_array($provider, ['facebook', 'github', 'google','twitter'])) {
+        if (!in_array($provider, ['facebook', 'github', 'google', 'twitter'])) {
             return response()->json(['error' => 'Please login using facebook, twitter, github or google'], 422);
         }
+    }
+
+    public function signUp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name'    => 'required',
+            'last_name'     => 'required',
+            'email'         => 'required|email|unique:users,email',
+            'password'      => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => $validator->errors()], 401);
+        }
+
+        $user = User::firstOrCreate(
+            [
+                'email' => $request->email
+            ],
+            [
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'password' => encrypt($request->password),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $token = $user->createToken('auth-socialite')->accessToken;
+        $success['status'] = 200;
+        $success['message'] = "Registration Successful !";
+        $success['data'] = $user;
+        $success['token'] = $token;
+
+        return response()->json($success, 200);
+    }
+
+    public function login(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email'         => 'required|email|exists:users,email',
+            'password'      => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => $validator->errors()], 401);
+        }
+
+        $user = User::where(['email' => $request->email])->first();
+        if (decrypt($user->password) == $request->password) {
+            $token = $user->createToken('auth-socialite')->accessToken;
+            $success['status'] = 200;
+            $success['message'] = "Login Successful !";
+            $success['data'] = $user;
+            $success['token'] = $token;
+            return response()->json($success, 200);
+        }
+        return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => "Invalid Password !"], 401);
+
     }
 }
