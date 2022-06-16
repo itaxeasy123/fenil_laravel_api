@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use App\Models\User;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
@@ -121,6 +122,64 @@ class AuthController extends Controller
             $success['status'] = 200;
             $success['message'] = "Login Successful !";
             $success['data'] = $user;
+            $success['token'] = $token;
+            return response()->json($success, 200);
+        }
+        return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => "Invalid Password !"], 401);
+
+    }
+
+    public function adminSignUp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name'    => 'required',
+            'last_name'     => 'required',
+            'email'         => 'required|email|unique:admins,email',
+            'password'      => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => $validator->errors()], 401);
+        }
+
+        $admin = Admin::firstOrCreate(
+            [
+                'email' => $request->email
+            ],
+            [
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'password' => encrypt($request->password),
+            ]
+        );
+
+        $token = $admin->createToken('admin')->accessToken;
+        $success['status'] = 200;
+        $success['message'] = "Admin Registration Successful !";
+        $success['data'] = $admin;
+        $success['token'] = $token;
+
+        return response()->json($success, 200);
+    }
+
+    public function adminLogin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email'         => 'required|email|exists:admins,email',
+            'password'      => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => $validator->errors()], 401);
+        }
+        
+        $admin = Admin::where(['email' => $request->email])->first();
+        if (decrypt($admin->password) == $request->password) {
+            Auth::login($admin);
+            $token = $admin->createToken('admin')->accessToken;
+            $success['status'] = 200;
+            $success['message'] = "Login Successful !";
+            $success['data'] = $admin;
             $success['token'] = $token;
             return response()->json($success, 200);
         }
