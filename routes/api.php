@@ -38,4 +38,5 @@ Route::middleware(['auth.admin','auth:api'])->group(function () {
     Route::post('merge', [ServiceController::class, 'merge']);
     Route::post('imagetopdf', [ServiceController::class, 'imageToPdf']);
     Route::post('compress', [ServiceController::class, 'compress']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 });
