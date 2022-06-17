@@ -31,7 +31,7 @@ Route::prefix('admin')->group(function () {
     Route::post('login', [AuthController::class, 'adminLogin']);
 });
 
-Route::middleware(['auth:api'])->group(function () {
+Route::middleware(['auth.admin','auth:api'])->group(function () {
     Route::get('get-extract', [ServiceController::class, 'getExtractData']);
     Route::post('extract', [ServiceController::class, 'extract']);
     Route::post('extract-invoice', [ServiceController::class, 'extractInvoice']);
