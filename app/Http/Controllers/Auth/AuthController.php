@@ -11,12 +11,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Facades\Socialite;
 use Exception;
+use App\Traits\ResponseAPI;
 
 
 use function GuzzleHttp\Promise\all;
 
 class AuthController extends Controller
 {
+    use ResponseAPI;
     public function redirectToProvider($provider)
     {
         $validated = $this->validateProvider($provider);
