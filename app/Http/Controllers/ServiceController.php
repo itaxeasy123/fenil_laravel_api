@@ -112,7 +112,8 @@ class ServiceController extends Controller
 
     public function merge(Request $request)
     {
-        File::deleteDirectory(public_path('PDF'));
+        $file = new Filesystem;
+        $file->cleanDirectory(public_path('PDFTemp'));
 
         $validator = Validator::make($request->all(), [
             'pdfs' => 'required',
@@ -132,15 +133,15 @@ class ServiceController extends Controller
         $fileName = time() . '.pdf';
         $pdf->merge();
 
-        $path = public_path('PDF/');
+        $path = public_path('PDFTemp/');
 
         if (!File::isDirectory($path)) {
-            File::makeDirectory($path, 7777, true, true);
+            File::makeDirectory($path, 0755, true);
         }
 
         $pdf->save($path . $fileName);
 
-        return response()->download(public_path('PDF/' . $fileName));
+        return response()->download(public_path('PDFTemp/' . $fileName));
     }
 
     public function imageToPdf(Request $request)
