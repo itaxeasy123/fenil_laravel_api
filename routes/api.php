@@ -32,6 +32,7 @@ Route::prefix('admin')->group(function () {
 });
 
 Route::middleware(['auth.admin','auth:api'])->group(function () {
+    Route::get('get-extract', [ServiceController::class, 'getExtractData']);
     Route::post('extract', [ServiceController::class, 'extract']);
     Route::post('extract-invoice', [ServiceController::class, 'extractInvoice']);
     Route::post('merge', [ServiceController::class, 'merge']);
