@@ -20,8 +20,8 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-Route::post('sign-up', [AuthController::class, 'signUp']);
-Route::post('login', [AuthController::class, 'login']);
+Route::post('sign-up', [AuthController::class, 'signUp'])->name('signup');
+Route::post('login', [AuthController::class, 'login'])->name('login');
 
 Route::get('login/{provider}', [AuthController::class, 'redirectToProvider']);
 Route::get('login/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
@@ -31,10 +31,14 @@ Route::prefix('admin')->group(function () {
     Route::post('login', [AuthController::class, 'adminLogin']);
 });
 
-Route::middleware(['auth.admin','auth:api'])->group(function () {
+Route::middleware(['auth:api,admin'])->group(function () {
+    Route::get('get-extract', [ServiceController::class, 'getExtractData']);
     Route::post('extract', [ServiceController::class, 'extract']);
     Route::post('extract-invoice', [ServiceController::class, 'extractInvoice']);
     Route::post('merge', [ServiceController::class, 'merge']);
     Route::post('imagetopdf', [ServiceController::class, 'imageToPdf']);
     Route::post('compress', [ServiceController::class, 'compress']);
+    Route::get('logout', [AuthController::class, 'logout']);
 });
+
+

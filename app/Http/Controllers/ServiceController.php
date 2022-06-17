@@ -110,6 +110,16 @@ class ServiceController extends Controller
         }
     }
 
+    public function getExtractData()
+    {
+        try {
+            $data = PdfData::all();
+            return response()->json(['status' => 200, 'message' => "Data Extract Successfully !", 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['status' => 200, 'message' => "Something went wrong,please check pdf !"]);
+        }
+    }
+
     public function merge(Request $request)
     {
         $file = new Filesystem;

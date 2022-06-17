@@ -10,11 +10,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Facades\Socialite;
+use Exception;
+use App\Traits\ResponseAPI;
+
 
 use function GuzzleHttp\Promise\all;
 
 class AuthController extends Controller
 {
+    use ResponseAPI;
     public function redirectToProvider($provider)
     {
         $validated = $this->validateProvider($provider);
@@ -185,5 +189,22 @@ class AuthController extends Controller
         }
         return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => "Invalid Password !"], 401);
 
+    }
+    public function logout(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if ($request->allDevice) {
+                $user->tokens->each(function ($token) {
+                    $token->delete();
+                });
+                return $this->success('Logged Out from all devices !!');
+            }
+            $userToken = $user->token();
+            $userToken->delete();
+            return $this->success('Logged Out Successfully !!');
+        } catch (Exception $e) {
+            return $this->error($e->getMessage());
+        }
     }
 }
