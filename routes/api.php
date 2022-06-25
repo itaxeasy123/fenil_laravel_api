@@ -42,4 +42,3 @@ Route::middleware(['auth:api,admin'])->group(function () {
 });
 
 
-
