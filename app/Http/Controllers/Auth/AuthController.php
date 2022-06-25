@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\UserForgotPasswordMail;
 use App\Models\Admin;
+use App\Models\PasswordReset;
 use App\Models\User;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
@@ -12,7 +14,9 @@ use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Facades\Socialite;
 use Exception;
 use App\Traits\ResponseAPI;
-
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 use function GuzzleHttp\Promise\all;
 
@@ -176,7 +180,7 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => $validator->errors()], 401);
         }
-        
+
         $admin = Admin::where(['email' => $request->email])->first();
         if (decrypt($admin->password) == $request->password) {
             Auth::login($admin);
@@ -206,5 +210,92 @@ class AuthController extends Controller
         } catch (Exception $e) {
             return $this->error($e->getMessage());
         }
+    }
+    public function forgetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email'         => 'required|email|exists:users,email'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => $validator->errors()], 401);
+        }
+
+        $token              = rand(111111, 999999);
+        $token_expire_at    = Carbon::now()->addMinutes(config('constants.mail_expiration_minutes'))->format('Y-m-d H:i:s');
+
+        try {
+            $details = [
+                'subject'   => 'Forgot Password Token',
+                'token'     => $token
+            ];
+            // send email
+            Mail::to($request->email)->send(new UserForgotPasswordMail($details));
+
+            $user = User::where(['email'=>$request->email])->first();
+            PasswordReset::create([
+                'user_id'               => $user->id,
+                'email'                 => $user->email,
+                'token'                 => $token,
+                'mail_token_expire_at'  => $token_expire_at
+            ]);
+
+            $response['success']  = true;
+            // $response['otp']      = $token;
+            $response['message']  = 'OTP sent successfully!';
+        } catch (Exception $e) {
+            Log::debug("Code: " . $e->getCode() . " Line: " . $e->getLine() . " Message: " . $e->getMessage());
+            $response["message"] = $e->getMessage();
+        }
+        return $response;
+    }
+
+    public function verifyOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email'         => 'required|email|exists:users,email',
+            'otp'         => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => $validator->errors()], 401);
+        }
+
+        $passwordResetData = PasswordReset::where(['email' => $request->email, 'token' => $request->otp])->latest()->first();
+        if (!empty($passwordResetData)) {
+            if ($passwordResetData->mail_token_expire_at < Carbon::now()) {
+                $this->response['message'] = 'Your token has expired.Please generate new token!';
+            } else {
+                PasswordReset::where('email', $request->email)->update(['token' => ""]);
+                $this->response['success'] = true;
+                $this->response['message'] = 'Set a new password.';
+            }
+        } else
+            $this->response['message'] = 'The OTP entered is incorrect.';
+
+        return $this->response;
+    }
+
+    public function setNewPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email'         => 'required|email|exists:users,email',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 200, 'message' => "Error Occured !", "error" => $validator->errors()], 401);
+        }
+
+        $user = User::where([
+            'email' => $request->email
+        ])->update(['password' => encrypt($request->password)]);
+        if ($user) {
+            $this->response['success'] = true;
+            $this->response['message'] = 'Password updated successfully.';
+        } else
+            $this->response['message'] = 'These credentials do not match our records.';
+
+        return $this->response;
     }
 }

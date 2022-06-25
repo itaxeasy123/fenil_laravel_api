@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('sign-up', [AuthController::class, 'signUp'])->name('signup');
 Route::post('login', [AuthController::class, 'login'])->name('login');
+Route::post('forget-password', [AuthController::class, 'forgetPassword']);
+Route::post('verify-otp', [AuthController::class, 'verifyOTP']);
+Route::post('set-new-password', [AuthController::class, 'setNewPassword']);
 
 Route::get('login/{provider}', [AuthController::class, 'redirectToProvider']);
 Route::get('login/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
