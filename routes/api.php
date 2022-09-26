@@ -57,7 +57,7 @@ Route::prefix('mca')->group(function () {
 });
 
 Route::prefix('bank')->group(function () {
-    Route::get('get-details', [BankController::class, 'getBankDetailsByIfsc']);
+    Route::post('get-details', [BankController::class, 'getBankDetailsByIfsc']);
     Route::post('verify-account', [BankController::class, 'verifyBankAccount']);
 });
 

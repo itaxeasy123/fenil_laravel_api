@@ -27,7 +27,7 @@ class BankController extends Controller
             }
             $response = Http::withHeaders(withSandBoxHeader())->get(env('SANDBOX_BASE_URL') . '/bank/' . $request->ifsc);
             $data = json_decode($response);
-            return $this->success($data);
+            return response()->json(['data' => $data], 200);
         } catch (Exception $e) {
             return $this->error($e->getMessage());
         }
